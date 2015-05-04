@@ -1,11 +1,15 @@
+'''
+configurations for the Uber library
+'''
+
 #
-# `env` toggles settings for dev / prod environments
+# `ENV` toggles settings for dev / prod environments
 #
-env = 'dev'  #prod
+ENV = 'dev'  # prod
 
 URL = dict(prod='https://api.uber.com/v1',
-        dev='https://sandbox-api.uber.com/v1')
-BASE_URL = URL[env]
+           dev='https://sandbox-api.uber.com/v1')
+BASE_URL = URL[ENV]
 
 STATUS = {}
 STATUS['0'] = 'processing'

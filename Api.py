@@ -7,26 +7,26 @@ Usage:
     >>> api.get_profile()
 """
 
-__all__ = ['Api']
+__all__ = ['Uber']
 
 import json
-import config
 import urllib
 import requests
-from config import BASE_URL
+from uber.config import BASE_URL
 
 
 class UberApiError(Exception):
-  '''Base class for Uber API errors'''
+    '''Base class for Uber API errors'''
 
-  @property
-  def message(self):
-    '''Returns the first argument used to construct this error.'''
-    return self.args[0]
+    @property
+    def message(self):
+        '''Returns the first argument used to construct this error.'''
+        return self.args[0]
 
 
 class Uber(object):
     """
+    instance of Uber API
     """
     def __init__(self, **credentials):
         self.url = BASE_URL
@@ -34,8 +34,7 @@ class Uber(object):
         self.user_token = credentials.get('user_token')
         print self.url
 
-
-    def authenticate(self, bearer=False, user_token=''):
+    def authenticate(self, bearer=False):
         '''
         returns authentication header
         '''
@@ -47,7 +46,6 @@ class Uber(object):
                 self.server_token))
         return request_headers
 
-
     def validate_response(self, resp):
         '''
         validates response from Uber API.
@@ -55,24 +53,21 @@ class Uber(object):
         Else, raise custom exception
         '''
         msg = "Unexpected response - HTTP:{} - payload: {}".format(
-                resp.status_code, resp.content)
+            resp.status_code, resp.content)
         if resp.status_code not in (200, 202):
             # 202 for Request
             raise UberApiError(msg)
 
-
     def get_products(self, latitude, longitude):
         '''
-        returns information about the Uber products offered at a 
+        returns information about the Uber products offered at a
         given location
         '''
         url = self.url + '/products'
-        params = dict(latitude=latitude,
-                longitude=longitude)
+        params = dict(latitude=latitude, longitude=longitude)
         resp = requests.get(url, data=params, headers=self.authenticate())
         self.validate_response(resp)
         return json.loads(resp.content)
-
 
     def get_product(self, product_id):
         '''
@@ -83,7 +78,6 @@ class Uber(object):
         resp = requests.get(url, data=params, headers=self.authenticate())
         self.validate_response(resp)
         return json.loads(resp.content)
-
 
     def get_price_estimate(self, start, end):
         '''
@@ -102,18 +96,17 @@ class Uber(object):
             assert 'longitude' in end
         except AssertionError:
             raise UberApiError("Incorrect request parameters - "
-                    "start: {} - end: {}".format(start, end))
+                               "start: {} - end: {}".format(start, end))
         url = self.url + '/estimates/price'
         params = dict(start_latitude=start.get('latitude'),
-                    start_longitude=start.get('longitude'),
-                    end_latitude=end.get('latitude'),
-                    end_longitude=end.get('longitude'))
+                      start_longitude=start.get('longitude'),
+                      end_latitude=end.get('latitude'),
+                      end_longitude=end.get('longitude'))
         url = url + '?%s' % urllib.urlencode(params)
         resp = requests.get(url, headers=self.authenticate())
         self.validate_response(resp)
         return json.loads(resp.content)
 
-    
     def get_time_estimate(self, start, customer_id=None, product_id=None):
         '''
         returns ETAs for all products offered at a given location
@@ -128,10 +121,10 @@ class Uber(object):
             assert 'longitude' in start
         except AssertionError:
             raise UberApiError("Incorrect request parameters - "
-                    "start: {} - end: {}".format(start, end))
+                               "start: {} ".format(start))
         url = self.url + '/estimates/time'
         params = dict(start_latitude=start.get('latitude'),
-                    start_longitude=start.get('longitude'))
+                      start_longitude=start.get('longitude'))
         if customer_id:
             params['customer_uuid'] = str(customer_id)
         if product_id:
@@ -140,7 +133,6 @@ class Uber(object):
         resp = requests.get(url, headers=self.authenticate())
         self.validate_response(resp)
         return json.loads(resp.content)
-
 
     def get_promotions(self, start={}, end={}):
         '''
@@ -153,25 +145,29 @@ class Uber(object):
         At least one valid set of coordinates is required.
         '''
         try:
-            assert (isinstance(start.get('latitude'), float) and\
-                            isinstance(start.get('longitude'), float)) or\
-                            (isinstance(end.get('latitude'), float) and\
-                            isinstance(end.get('longitude'), float))
+            assert (isinstance(start.get('latitude'), float) and
+                    isinstance(start.get('longitude'), float)) or\
+                   (isinstance(end.get('latitude'), float) and
+                    isinstance(end.get('longitude'), float))
         except AssertionError:
-            raise UberApiError("Incorrect parameters - start: {} - end: {}".format(start, end))
+            raise UberApiError("Incorrect parameters - "
+                               "start: {} - end: {}".format(start, end))
         url = self.url + '/promotions'
 
         params = dict(start_latitude=start.get('latitude'),
-                    start_longitude=start.get('longitude'),
-                    end_latitude=end.get('latitude'),
-                    end_longitude=end.get('longitude'))
+                      start_longitude=start.get('longitude'),
+                      end_latitude=end.get('latitude'),
+                      end_longitude=end.get('longitude'))
         url = url + '?%s' % urllib.urlencode(params)
         resp = requests.get(url, headers=self.authenticate())
         self.validate_response(resp)
         return json.loads(resp.content)
 
-
     def get_profile(self,):
+        '''
+        returns information about the Uber user that has
+        authorized with the application
+        '''
         try:
             url = self.url + '/me'
             resp = requests.get(url, headers=self.authenticate(bearer=True))
@@ -180,7 +176,6 @@ class Uber(object):
         except Exception, err:
             error = 'cannot get profile - {}'.format(str(err))
             raise UberApiError(error)
-
 
     def request(self, product_id, start, end):
         '''
@@ -201,25 +196,24 @@ class Uber(object):
 
             url = self.url + '/requests'
             params = dict(product_id=str(product_id),
-                        start_latitude=start.get('latitude'),
-                        start_longitude=start.get('longitude'),
-                        end_latitude=end.get('latitude'),
-                        end_longitude=end.get('longitude'))
+                          start_latitude=start.get('latitude'),
+                          start_longitude=start.get('longitude'),
+                          end_latitude=end.get('latitude'),
+                          end_longitude=end.get('longitude'))
             request_headers = self.authenticate(bearer=True)
             request_headers['Content-Type'] = 'application/json'
             resp = requests.post(url, data=json.dumps(params),
-                    headers=request_headers)
+                                 headers=request_headers)
             self.validate_response(resp)
             return json.loads(resp.content)
-        
+
         except AssertionError:
             raise UberApiError("Incorrect request parameters - "
-                    "start: {} - end: {}".format(start, end))
+                               "start: {} - end: {}".format(start, end))
 
         except Exception, err:
             error = 'Uber.request() fail - {}'.format(str(err))
             raise UberApiError(error)
-
 
     def request_details(self, request_id):
         '''
@@ -256,5 +250,5 @@ class Uber(object):
             else:
                 return False
         except Exception, err:
-            error = 'SANDBOX: could not update request status - {}'.format(str(err))
+            error = 'cannot update request status - {}'.format(str(err))
             raise UberApiError(error)
