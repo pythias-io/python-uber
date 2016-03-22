@@ -3,7 +3,7 @@ UBER API Client Library
 
 Usage:
     >>> from uber import Api
-    >>> api = Api.Uber(**credentials)
+    >>> api = Api.Uber(SERVER_TOKEN='ABC', user_token='xyz')
     >>> api.get_profile()
 """
 
@@ -12,7 +12,25 @@ __all__ = ['Uber']
 import json
 import urllib
 import requests
-from uber.config import BASE_URL
+
+#
+# `ENV` toggles settings for dev / prod environments
+#
+ENV = 'dev'  # prod
+
+URL = dict(prod='https://api.uber.com/v1',
+           dev='https://sandbox-api.uber.com/v1')
+BASE_URL = URL[ENV]
+
+STATUS = {}
+STATUS['0'] = 'processing'
+STATUS['1'] = 'accepted'
+STATUS['2'] = 'arriving'
+STATUS['3'] = 'in_progress'
+STATUS['4'] = 'completed'
+STATUS['5'] = 'rider_canceled'
+STATUS['6'] = 'driver_canceled'
+STATUS['7'] = 'no_driver_available'
 
 
 class UberApiError(Exception):
@@ -28,10 +46,10 @@ class Uber(object):
     """
     instance of Uber API
     """
-    def __init__(self, **credentials):
+    def __init__(self, SERVER_TOKEN='', user_token=''):
         self.url = BASE_URL
-        self.server_token = credentials.get('SERVER_TOKEN')
-        self.user_token = credentials.get('user_token')
+        self.server_token = SERVER_TOKEN
+        self.user_token = user_token
         print self.url
 
     def authenticate(self, bearer=False):
